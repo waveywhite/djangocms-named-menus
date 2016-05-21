@@ -1,14 +1,18 @@
-from menus.templatetags.menu_tags import ShowMenu
-from classytags.arguments import IntegerArgument, Argument, StringArgument
-from classytags.core import Options
 from django import template
-from ..models import CMSNamedMenu
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 import logging
-from menus.menu_pool import menu_pool
+
+from classytags.arguments import IntegerArgument, Argument, StringArgument
+from classytags.core import Options
 from cms.api import get_page_draft
-from cms.utils.moderator import use_draft
 from cms.models.pagemodel import Page
+from menus.menu_pool import menu_pool
+from menus.templatetags.menu_tags import ShowMenu
+
+from ..models import CMSNamedMenu
+
+
 try:
     from cms.menu import page_to_node
 except ImportError:
@@ -47,18 +51,27 @@ class ShowMultipleMenu(ShowMenu):
                         'namespace': kwargs.get('namespace')
                         })
 
-        try:
-            named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
-        except ObjectDoesNotExist:
-            logging.warn("Named CMS Menu %s not found" % menu_name)
-            return context
+        if hasattr(menu_pool, 'get_renderer'):
+            # Django CMS >= 3.3
+            renderer = menu_pool.get_renderer(context['request'])  # @UndefinedVariable
+        else:
+            renderer = menu_pool
 
-        nodes = menu_pool.get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
-
+        key = 'cms_named_menu_%s' % menu_name
+        arranged_nodes = cache.get(key, None)
+        if arranged_nodes is None:
+            try:
+                named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
+            except ObjectDoesNotExist:
+                logging.warn("Named CMS Menu %s not found" % menu_name)
+                arranged_nodes = []
+            else:
+                nodes = renderer.get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
+                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
+            cache.set(key, arranged_nodes)
         context.update({
-            'children': self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
+            'children': arranged_nodes
         })
-
         return context
 
     def arrange_nodes(self, node_list, node_config, namespace=None):
@@ -87,7 +100,7 @@ class ShowMultipleMenu(ShowMenu):
 
         return item_node
 
-    def get_node_by_id(self, id, nodes, namespace=None):
+    def get_node_by_id(self, id, nodes, namespace=None):  # @ReservedAssignment
 
         final_node = None
 
