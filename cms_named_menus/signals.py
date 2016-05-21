@@ -14,7 +14,6 @@ from django.dispatch.dispatcher import receiver
 
 def clear_cache(menu):
     key = 'cms_named_menu_%s' % menu.name
-    print "Clearing menu %s" % menu.name
     cache.delete(key)
 
 @receiver(post_save, sender=CMSNamedMenu, dispatch_uid='clear_cache_named_menu_saved')
