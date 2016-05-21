@@ -1,12 +1,12 @@
-from django import template
-from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
+from cms_named_menus import cache
 import logging
 
 from classytags.arguments import IntegerArgument, Argument, StringArgument
 from classytags.core import Options
 from cms.api import get_page_draft
 from cms.models.pagemodel import Page
+from django import template
+from django.core.exceptions import ObjectDoesNotExist
 from menus.menu_pool import menu_pool
 from menus.templatetags.menu_tags import ShowMenu
 
@@ -58,8 +58,8 @@ class ShowMultipleMenu(ShowMenu):
         else:
             renderer = menu_pool
 
-        key = 'cms_named_menu_%s_%s' % (get_language(), menu_name)
-        arranged_nodes = cache.get(key, None)
+        lang = get_language()
+        arranged_nodes = cache.get(menu_name, lang)
         if arranged_nodes is None:
             try:
                 named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
@@ -69,7 +69,7 @@ class ShowMultipleMenu(ShowMenu):
             else:
                 nodes = renderer.get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
-            cache.set(key, arranged_nodes)
+            cache.set(menu_name, lang, arranged_nodes)
         context.update({
             'children': arranged_nodes
         })
