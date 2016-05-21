@@ -1,2 +1,4 @@
 node_modules
 cms_named_menus/static/cmsnamedmenus/vendor/
+*.pyc
+.*
