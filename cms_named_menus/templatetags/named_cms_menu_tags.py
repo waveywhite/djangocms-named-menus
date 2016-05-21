@@ -11,6 +11,7 @@ from menus.menu_pool import menu_pool
 from menus.templatetags.menu_tags import ShowMenu
 
 from ..models import CMSNamedMenu
+from django.utils.translation import get_language
 
 
 try:
@@ -57,7 +58,7 @@ class ShowMultipleMenu(ShowMenu):
         else:
             renderer = menu_pool
 
-        key = 'cms_named_menu_%s' % menu_name
+        key = 'cms_named_menu_%s_%s' % (get_language(), menu_name)
         arranged_nodes = cache.get(key, None)
         if arranged_nodes is None:
             try:
