@@ -20,9 +20,19 @@ def set(menu_name, lang, nodes):  # @ReservedAssignment
     cache.set(key, nodes)
 
 def delete(menu_name, lang=None):
+    delete_many([menu_name], lang)
+
+def delete_many(menus_names, lang=None):
+    if len(menus_names) == 0:
+        return
+    keys = []
     if lang is not None:
-        key = _key(menu_name, lang)
-        cache.delete(key)
+        languages = [lang]
     else:
-        keys = [_key(menu_name, lang) for lang, _ in settings.LANGUAGES]
+        languages = [lang for lang, _ in settings.LANGUAGES]
+    for menu_name in menus_names:
+        keys.extend(_key(menu_name, lang) for lang in languages)
+    if len(keys) == 1:
+        cache.delete(keys[0])
+    else:
         cache.delete_many(keys)

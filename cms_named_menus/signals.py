@@ -20,7 +20,10 @@ def clear_cache_named_menu_saved(sender, instance, **kwargs):
     
 @receiver(post_save, sender=Title, dispatch_uid='clear_cache_title_saved')
 def clear_cache_title_saved(sender, instance, **kwargs):
+    menu_names = []
     for menu in CMSNamedMenu.objects.all():
         if contains_page(menu, instance.page.id):
-            cache.delete(menu.name, instance.language)
+            menu_names.append(menu.name)
+    if menu_names:
+        cache.delete_many(menu_names, instance.language)
     
