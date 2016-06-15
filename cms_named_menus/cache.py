@@ -4,6 +4,9 @@ Created on May 21, 2016
 
 @author: jakob
 '''
+from cms_named_menus.models import CMSNamedMenu
+from cms_named_menus.utils import contains_page
+
 from django.conf import settings
 from django.core.cache import cache
 
@@ -36,3 +39,11 @@ def delete_many(menus_names, lang=None):
         cache.delete(keys[0])
     else:
         cache.delete_many(keys)
+
+def delete_by_page_id(page_id, lang=None):
+    menu_names = []
+    for menu in CMSNamedMenu.objects.all():
+        if contains_page(menu, page_id):
+            menu_names.append(menu.name)
+    if menu_names:
+        delete_many(menu_names, lang)
