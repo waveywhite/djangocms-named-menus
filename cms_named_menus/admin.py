@@ -1,8 +1,11 @@
-from django.contrib import admin
-from .models import CMSNamedMenu
 import json
+
 from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth.models import AnonymousUser
 from menus.menu_pool import menu_pool
+
+from .models import CMSNamedMenu
 
 
 class LazyEncoder(json.JSONEncoder):
@@ -15,6 +18,19 @@ class LazyEncoder(json.JSONEncoder):
             return force_unicode(obj)
         return obj
 
+def anonymous_request(f):
+    def decorator(self, request):
+        auth_user = None
+        if request.user.is_authenticated():
+            auth_user = request.user
+            request.user = AnonymousUser()
+        try:
+            result = f(self, request)
+        finally:
+            if auth_user is not None:
+                request.user = auth_user
+        return result
+    return decorator
 
 class CMSNamedMenuAdmin(admin.ModelAdmin):
     change_form_template = 'cms_named_menus/change_form.html'
@@ -36,6 +52,7 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
                                                           form_url,
                                                           extra_context)
 
+    @anonymous_request
     def serialize_navigation(self, request):
 
         nodes = menu_pool.get_nodes(request)
