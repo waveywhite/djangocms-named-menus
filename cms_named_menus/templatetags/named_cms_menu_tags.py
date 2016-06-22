@@ -95,10 +95,11 @@ class ShowMultipleMenu(ShowMenu):
                     else:
                         final_node = node
                         break
-            final_node.children = []
-            final_node.parent = []
         except:
             logger.exception('Failed to find node')
+        if final_node is not None:
+            final_node.children = []
+            final_node.parent = []
         return final_node
 
 
