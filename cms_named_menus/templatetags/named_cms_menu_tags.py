@@ -77,7 +77,14 @@ class ShowMultipleMenu(ShowMenu):
         item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
         if item_node is None:
             return None
-        for child_item in item.get('children', []):
+        if item_node.attr.get('cms_named_menus_generate_children', False):
+            # Dynamic children
+            # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
+            child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
+        else:
+            # Defined in the menu
+            child_items = item.get('children', [])
+        for child_item in child_items:
             child_node = self.get_node_by_id(child_item['id'], node_list, namespace=item['namespace'])
             if child_node is not None:
                 item_node.children.append(child_node)
