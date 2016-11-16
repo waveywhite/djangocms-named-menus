@@ -36,6 +36,9 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
         nodes = get_nodes(request)
         cleaned = []
         for node in nodes:
+            # Allow hiding from named menu selection
+            if node.attr.get('cms_named_menus_hidden', False):
+                continue
             node.children = None
             node.parent = None
             cleaned.append(node.__dict__)
