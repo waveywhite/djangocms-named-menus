@@ -94,19 +94,14 @@ class ShowMultipleMenu(ShowMenu):
         final_node = None
         try:
             for node in nodes:
-                if node.id == id:
-                    if namespace:
-                        if node.namespace == namespace:
-                            final_node = node
-                            break
-                    else:
-                        final_node = node
-                        break
+                if node.id == id and (namespace is None or node.namespace == namespace):
+                    final_node = node
+                    break
         except:
             logger.exception('Failed to find node')
         if final_node is not None:
+            final_node.parent = None
             final_node.children = []
-            final_node.parent = []
         return final_node
 
 
