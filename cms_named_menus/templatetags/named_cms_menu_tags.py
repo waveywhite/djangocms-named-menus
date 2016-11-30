@@ -48,12 +48,16 @@ class ShowMultipleMenu(ShowMenu):
         })
 
         lang = get_language()
+        
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Creating menu {0} {1}'.format(menu_name, lang))
+        
         arranged_nodes = cache.get(menu_name, lang)
         if arranged_nodes is None:
             try:
                 named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
             except ObjectDoesNotExist:
-                logging.warn("Named CMS Menu %s not found" % menu_name)
+                logger.warn('Named CMS Menu {0} {1} not found'.format(menu_name, lang))
                 arranged_nodes = []
             else:
                 nodes = get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
@@ -81,6 +85,10 @@ class ShowMultipleMenu(ShowMenu):
             # Dynamic children
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
             child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
+            if logger.isEnabledFor(logging.DEBUG):
+                import json
+                children_json = json.dumps(child_items, indent=4)
+                logger.debug('Generated child items for {0}:\n{1}'.format(item_node.title, children_json))
         else:
             # Defined in the menu
             child_items = item.get('children', [])
