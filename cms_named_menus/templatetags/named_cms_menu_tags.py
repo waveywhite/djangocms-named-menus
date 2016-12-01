@@ -62,9 +62,6 @@ class ShowMultipleMenu(ShowMenu):
                 arranged_nodes = []
             else:
                 nodes = get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
-                if logger.isEnabledFor(logging.DEBUG):
-                    nodes_json = json.dumps([{ node.id : node.title } for node in nodes], indent=4)
-                    logger.debug(u'Building menu from nodes {0}:\n{1}'.format(menu_name, nodes_json))
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
             cache.set(menu_name, lang, arranged_nodes)
         context.update({
@@ -89,9 +86,9 @@ class ShowMultipleMenu(ShowMenu):
             # Dynamic children
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
             child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
-            if logger.isEnabledFor(logging.DEBUG):
-                children_json = json.dumps(child_items, indent=4)
-                logger.debug(u'Generated child items for {0}:\n{1}'.format(item_node.title, children_json))
+            if len(child_items) == 0:
+                nodes_json = json.dumps([{ node.id : node.title } for node in node_list], indent=4)
+                logger.warn(u'Empty children for {0}:\n{1}'.format(item_node.title, nodes_json))
         else:
             # Defined in the menu
             child_items = item.get('children', [])
