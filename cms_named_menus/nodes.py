@@ -28,5 +28,6 @@ def get_nodes(request, namespace=None, root_id=None):
         # Django CMS >= 3.3
         renderer = menu_pool.get_renderer(request)  # @UndefinedVariable
     else:
+        menu_pool.clear(all=True)
         renderer = menu_pool
     return renderer.get_nodes(request, namespace, root_id)
