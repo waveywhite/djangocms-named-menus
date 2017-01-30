@@ -106,8 +106,6 @@ class ShowMultipleMenu(ShowMenu):
         if item_node is None:
             return None
 
-        self._warn_empty(request, item_node, node_list)
-
         if item_node.attr.get('cms_named_menus_generate_children', False):
             # Dynamic children
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
