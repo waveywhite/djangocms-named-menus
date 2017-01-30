@@ -1,4 +1,3 @@
-import json
 from cms_named_menus import cache
 import logging
 
@@ -81,25 +80,6 @@ class ShowMultipleMenu(ShowMenu):
             if node is not None:
                 arranged_nodes.append(node)
         return arranged_nodes
-    
-    def _warn_empty(self, request, item_node, node_list):
-            # Additional debugging output...
-            def node_list_str(nodes):
-                return u'\n'.join([ u'%s: %s' % (node.id, node.title) for node in nodes])
-            from menus.menu_pool import menu_pool
-            renderer = menu_pool.get_renderer(request)
-            menus = []
-            for menu_class_name in renderer.menus:
-                menu = renderer.get_menu(menu_class_name)
-                if hasattr(menu, 'instance') and not menu.instance.publisher_is_draft \
-                        and menu_class_name.startswith('Anchor'):
-                    menu_name = u'MENU: %s - %s' % (menu_class_name, menu.instance)
-                    nodes = menu.get_nodes(request)
-                    menu_name += u'\nNODES:\n%s' % node_list_str(nodes)
-                    menu_name += '\n' + 60 * '#'
-                    menus.append(menu_name)
-            logger.warn(u'Empty children for %s\nRegistered page menus in menu pool:\n%s', 
-                        item_node.title, u'\n'.join(menus))
 
     def create_node(self, request, item, node_list):
         item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
@@ -111,7 +91,7 @@ class ShowMultipleMenu(ShowMenu):
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
             child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
             if len(child_items) == 0:
-                self._warn_empty(request, item_node, node_list)
+                logger.warn(u'Empty children for %s', item_node.title)
         else:
             # Defined in the menu
             child_items = item.get('children', [])
