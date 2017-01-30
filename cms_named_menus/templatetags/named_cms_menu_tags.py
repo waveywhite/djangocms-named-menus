@@ -50,20 +50,20 @@ class ShowMultipleMenu(ShowMenu):
 
         lang = get_language()
         
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(u'Creating menu {0} {1}'.format(menu_name, lang))
-        
         arranged_nodes = cache.get(menu_name, lang)
         if arranged_nodes is None:
+            logger.debug(u'Creating menu "%s %s"', menu_name, lang)
             try:
                 named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
             except ObjectDoesNotExist:
-                logger.warn(u'Named CMS Menu {0} {1} not found'.format(menu_name, lang))
+                logger.warn(u'Named menu "%s %s" not found', menu_name, lang)
                 arranged_nodes = []
             else:
                 nodes = get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
             cache.set(menu_name, lang, arranged_nodes)
+        else:
+            logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
         context.update({
             'children': arranged_nodes
         })
@@ -82,13 +82,17 @@ class ShowMultipleMenu(ShowMenu):
         item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
         if item_node is None:
             return None
+
         if item_node.attr.get('cms_named_menus_generate_children', False):
             # Dynamic children
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
             child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
             if len(child_items) == 0:
                 nodes_json = json.dumps([{ node.id : node.title } for node in node_list], indent=4)
-                logger.warn(u'Empty children for {0}:\n{1}'.format(item_node.title, nodes_json))
+                logger.warn(u'Empty children for %s:\n%s', item_node.title, nodes_json)
+                # Additional debugging output...
+                from menus.menu_pool import menu_pool
+                logger.warn('Menus in menu pool:\n%s', '\n'.join(menu_pool.menus.keys()))
         else:
             # Defined in the menu
             child_items = item.get('children', [])

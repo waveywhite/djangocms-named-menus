@@ -9,6 +9,7 @@ from cms_named_menus.utils import contains_page
 
 from django.conf import settings
 from django.core.cache import cache
+from cms_named_menus.settings import CACHE_DURATION
 
 
 def _key(menu_name, lang):
@@ -20,7 +21,7 @@ def get(menu_name, lang):
 
 def set(menu_name, lang, nodes):  # @ReservedAssignment
     key = _key(menu_name, lang)
-    cache.set(key, nodes)
+    cache.set(key, nodes, CACHE_DURATION)
 
 def delete(menu_name, lang=None):
     delete_many([menu_name], lang)
