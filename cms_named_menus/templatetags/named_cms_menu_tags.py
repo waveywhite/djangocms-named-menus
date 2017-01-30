@@ -92,7 +92,8 @@ class ShowMultipleMenu(ShowMenu):
                 logger.warn(u'Empty children for %s:\n%s', item_node.title, nodes_json)
                 # Additional debugging output...
                 from menus.menu_pool import menu_pool
-                logger.warn('Menus in menu pool:\n%s', '\n'.join(menu_pool.menus.keys()))
+                menus = menu_pool.get_registered_menus(True)
+                logger.warn('Registered Menus in menu pool:\n%s', '\n'.join(menus))
         else:
             # Defined in the menu
             child_items = item.get('children', [])
