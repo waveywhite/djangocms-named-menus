@@ -50,6 +50,10 @@ class ShowMultipleMenu(ShowMenu):
 
         lang = get_language()
         
+        request = context['request']
+        namespace = kwargs['namespace']
+        root_id = kwargs['root_id']
+        
         arranged_nodes = cache.get(menu_name, lang)
         if arranged_nodes is None:
             logger.debug(u'Creating menu "%s %s"', menu_name, lang)
@@ -59,8 +63,8 @@ class ShowMultipleMenu(ShowMenu):
                 logger.warn(u'Named menu "%s %s" not found', menu_name, lang)
                 arranged_nodes = []
             else:
-                nodes = get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
-                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
+                nodes = get_nodes(request, namespace, root_id)
+                arranged_nodes = self.arrange_nodes(request, nodes, named_menu, namespace=namespace)
             cache.set(menu_name, lang, arranged_nodes)
         else:
             logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
@@ -69,16 +73,16 @@ class ShowMultipleMenu(ShowMenu):
         })
         return context
 
-    def arrange_nodes(self, node_list, node_config, namespace=None):
+    def arrange_nodes(self, request, node_list, node_config, namespace=None):
         arranged_nodes = []
         for item in node_config:
             item.update({'namespace': namespace})
-            node = self.create_node(item, node_list)
+            node = self.create_node(request, item, node_list)
             if node is not None:
                 arranged_nodes.append(node)
         return arranged_nodes
 
-    def create_node(self, item, node_list):
+    def create_node(self, request, item, node_list):
         item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
         if item_node is None:
             return None
@@ -92,8 +96,14 @@ class ShowMultipleMenu(ShowMenu):
                 logger.warn(u'Empty children for %s:\n%s', item_node.title, nodes_json)
                 # Additional debugging output...
                 from menus.menu_pool import menu_pool
-                menus = menu_pool.get_registered_menus(True)
-                logger.warn('Registered Menus in menu pool:\n%s', '\n'.join(menus))
+                renderer = menu_pool.get_renderer(request)
+                menus = []
+                for menu_class_name in renderer.menus:
+                    menu = renderer.get_menu(menu_class_name)
+                    if hasattr(menu, 'instance') and not menu.instance.publisher_is_draft:
+                        menus.append(menu_class_name + ' - ' + str(menu.instance))
+                menus.sort()
+                logger.warn('Registered page menus in menu pool:\n%s', '\n'.join(menus))
         else:
             # Defined in the menu
             child_items = item.get('children', [])
