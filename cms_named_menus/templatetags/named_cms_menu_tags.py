@@ -63,7 +63,7 @@ class ShowMultipleMenu(ShowMenu):
                 arranged_nodes = []
             else:
                 nodes = get_nodes(request, namespace, root_id)
-                arranged_nodes = self.arrange_nodes(request, nodes, named_menu, namespace=namespace)
+                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
             cache.set(menu_name, lang, arranged_nodes)
         else:
             logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
@@ -72,17 +72,18 @@ class ShowMultipleMenu(ShowMenu):
         })
         return context
 
-    def arrange_nodes(self, request, node_list, node_config, namespace=None):
+    def arrange_nodes(self, node_list, node_config, namespace=None):
         arranged_nodes = []
         for item in node_config:
-            item.update({'namespace': namespace})
-            node = self.create_node(request, item, node_list)
+            item.update({'namespace': namespace })
+            node = self.create_node(item, node_list)
             if node is not None:
                 arranged_nodes.append(node)
         return arranged_nodes
 
-    def create_node(self, request, item, node_list):
-        item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
+    def create_node(self, item, node_list):
+        namespace = item['namespace']
+        item_node = self.get_node_by_id(item['id'], node_list, namespace)
         if item_node is None:
             return None
 
@@ -96,12 +97,12 @@ class ShowMultipleMenu(ShowMenu):
             # Defined in the menu
             child_items = item.get('children', [])
         for child_item in child_items:
-            child_node = self.get_node_by_id(child_item['id'], node_list, namespace=item['namespace'])
+            child_node = self.get_node_by_id(child_item['id'], node_list, namespace)
             if child_node is not None:
                 item_node.children.append(child_node)
         return item_node
 
-    def get_node_by_id(self, id, nodes, namespace=None):  # @ReservedAssignment
+    def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
         final_node = None
         try:
             for node in nodes:
