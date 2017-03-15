@@ -64,7 +64,7 @@ class ShowMultipleMenu(ShowMenu):
             else:
                 nodes = get_nodes(request, namespace, root_id)
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
-            cache.set(menu_name, lang, arranged_nodes)
+                cache.set(menu_name, lang, arranged_nodes)
         else:
             logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
         context.update({
