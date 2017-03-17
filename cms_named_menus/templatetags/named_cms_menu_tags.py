@@ -59,7 +59,7 @@ class ShowMultipleMenu(ShowMenu):
             try:
                 named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
             except ObjectDoesNotExist:
-                logger.warn(u'Named menu "%s %s" not found', menu_name, lang)
+                logger.info(u'Named menu "%s %s" not found', menu_name, lang)
                 arranged_nodes = []
             else:
                 nodes = get_nodes(request, namespace, root_id)
