@@ -64,7 +64,11 @@ class ShowMultipleMenu(ShowMenu):
             else:
                 nodes = get_nodes(request, namespace, root_id)
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
-                cache.set(menu_name, lang, arranged_nodes)
+                if len(arranged_nodes)>0:
+                    logger.debug(u'put %i menu "%s %s" to cache', len(arranged_nodes), menu_name, lang)
+                    cache.set(menu_name, lang, arranged_nodes)
+                else:
+                    logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_name, lang)
         else:
             logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
         context.update({
