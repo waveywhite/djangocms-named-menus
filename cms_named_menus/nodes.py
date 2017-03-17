@@ -30,4 +30,4 @@ def get_nodes(request, namespace=None, root_id=None):
     else:
         menu_pool.clear(all=True)
         renderer = menu_pool
-    return renderer.get_nodes(request, namespace, root_id)
+    return renderer.get_nodes(namespace=namespace, root_id=root_id, site_id=None, breadcrumb=False)
