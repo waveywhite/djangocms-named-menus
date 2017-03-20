@@ -24,10 +24,7 @@ def anonymous_request(f):
 
 @anonymous_request
 def get_nodes(request, namespace=None, root_id=None):
-    if hasattr(menu_pool, 'get_renderer'):
-        # Django CMS >= 3.3
-        renderer = menu_pool.get_renderer(request)  # @UndefinedVariable
-    else:
-        menu_pool.clear(all=True)
-        renderer = menu_pool
+    # Django CMS >= 3.3
+    renderer = menu_pool.get_renderer(request)
+
     return renderer.get_nodes(namespace=namespace, root_id=root_id, site_id=None, breadcrumb=False)
