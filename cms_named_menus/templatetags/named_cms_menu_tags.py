@@ -17,8 +17,11 @@ logger = logging.getLogger(__name__)
 register = template.Library()
 
 
+NODES_REQUEST_CACHE_ATTR="named_cms_menu_nodes_cache"
+
+
 class ShowMultipleMenu(ShowMenu):
-    
+
     name = 'show_named_menu'
 
     options = Options(
@@ -62,7 +65,12 @@ class ShowMultipleMenu(ShowMenu):
                 logger.info(u'Named menu "%s %s" not found', menu_name, lang)
                 arranged_nodes = []
             else:
-                nodes = get_nodes(request, namespace, root_id)
+                nodes = getattr(request, NODES_REQUEST_CACHE_ATTR, None)
+                if nodes is None:
+                    nodes = get_nodes(request, namespace, root_id)
+                    # getting nodes is slow, cache on request object will
+                    # speedup if more than one named menus are on the page
+                    setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
                 arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
                 if len(arranged_nodes)>0:
                     logger.debug(u'put %i menu "%s %s" to cache', len(arranged_nodes), menu_name, lang)
