@@ -19,8 +19,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=1.6',
-        'django-cms>=3.0',
+        'django-cms>=3.3',
         'jsonfield>=1.0.0',
-        'django-autoslug==1.7.2',
+        'django-autoslug>=1.7.2',
     ],
 )

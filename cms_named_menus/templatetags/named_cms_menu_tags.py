@@ -1,25 +1,27 @@
-from menus.templatetags.menu_tags import ShowMenu
+from cms_named_menus import cache
+import logging
+
 from classytags.arguments import IntegerArgument, Argument, StringArgument
 from classytags.core import Options
 from django import template
-from ..models import CMSNamedMenu
 from django.core.exceptions import ObjectDoesNotExist
-import logging
-from menus.menu_pool import menu_pool
-from cms.api import get_page_draft
-from cms.utils.moderator import use_draft
-from cms.models.pagemodel import Page
-try:
-    from cms.menu import page_to_node
-except ImportError:
-    from cms.cms_menus import page_to_node
+from django.utils.translation import get_language
+from menus.templatetags.menu_tags import ShowMenu
+
+from cms_named_menus.nodes import get_nodes
+from cms_named_menus.models import CMSNamedMenu
+
 
 logger = logging.getLogger(__name__)
 
 register = template.Library()
 
 
+NODES_REQUEST_CACHE_ATTR="named_cms_menu_nodes_cache"
+
+
 class ShowMultipleMenu(ShowMenu):
+
     name = 'show_named_menu'
 
     options = Options(
@@ -38,86 +40,92 @@ class ShowMultipleMenu(ShowMenu):
 
         menu_name = kwargs.pop('menu_name')
 
-        context.update({'children': [],
-                        'template': kwargs.get('template'),
-                        'from_level': kwargs.get('from_level'),
-                        'to_level': kwargs.get('to_level'),
-                        'extra_inactive': kwargs.get('extra_inactive'),
-                        'extra_active': kwargs.get('extra_active'),
-                        'namespace': kwargs.get('namespace')
-                        })
-
-        try:
-            named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
-        except ObjectDoesNotExist:
-            logging.warn("Named CMS Menu %s not found" % menu_name)
-            return context
-
-        nodes = menu_pool.get_nodes(context['request'], kwargs['namespace'], kwargs['root_id'])
-
         context.update({
-            'children': self.arrange_nodes(nodes, named_menu, namespace=kwargs['namespace'])
+            'children': [],
+            'template': kwargs.get('template'),
+            'from_level': kwargs.get('from_level'),
+            'to_level': kwargs.get('to_level'),
+            'extra_inactive': kwargs.get('extra_inactive'),
+            'extra_active': kwargs.get('extra_active'),
+            'namespace': kwargs.get('namespace')
         })
 
+        lang = get_language()
+        
+        request = context['request']
+        namespace = kwargs['namespace']
+        root_id = kwargs['root_id']
+        
+        arranged_nodes = cache.get(menu_name, lang)
+        if arranged_nodes is None:
+            logger.debug(u'Creating menu "%s %s"', menu_name, lang)
+            try:
+                named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
+            except ObjectDoesNotExist:
+                logger.info(u'Named menu "%s %s" not found', menu_name, lang)
+                arranged_nodes = []
+            else:
+                nodes = getattr(request, NODES_REQUEST_CACHE_ATTR, None)
+                if nodes is None:
+                    nodes = get_nodes(request, namespace, root_id)
+                    # getting nodes is slow, cache on request object will
+                    # speedup if more than one named menus are on the page
+                    setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
+                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
+                if len(arranged_nodes)>0:
+                    logger.debug(u'put %i menu "%s %s" to cache', len(arranged_nodes), menu_name, lang)
+                    cache.set(menu_name, lang, arranged_nodes)
+                else:
+                    logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_name, lang)
+        else:
+            logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
+        context.update({
+            'children': arranged_nodes
+        })
         return context
 
     def arrange_nodes(self, node_list, node_config, namespace=None):
-        
         arranged_nodes = []
-
         for item in node_config:
-            item.update({'namespace': namespace})
+            item.update({'namespace': namespace })
             node = self.create_node(item, node_list)
             if node is not None:
                 arranged_nodes.append(node)
-
         return arranged_nodes
 
     def create_node(self, item, node_list):
-        
-        item_node = self.get_node_by_id(item['id'], node_list, namespace=item['namespace'])
+        namespace = item['namespace']
+        item_node = self.get_node_by_id(item['id'], node_list, namespace)
         if item_node is None:
             return None
-        
-        for child_item in item.get('children', []):
-            
-            child_node = self.get_node_by_id(child_item['id'], node_list, namespace=item['namespace'])
+
+        if item_node.attr.get('cms_named_menus_generate_children', False):
+            # Dynamic children
+            # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
+            child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
+            if len(child_items) == 0:
+                logger.warn(u'Empty children for %s', item_node.title)
+        else:
+            # Defined in the menu
+            child_items = item.get('children', [])
+        for child_item in child_items:
+            child_node = self.get_node_by_id(child_item['id'], node_list, namespace)
             if child_node is not None:
                 item_node.children.append(child_node)
-
         return item_node
 
-    def get_node_by_id(self, id, nodes, namespace=None):
-
+    def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
         final_node = None
-
         try:
             for node in nodes:
-                
-                if node.id == id:
-                    if namespace:
-                        if node.namespace == namespace:
-                            final_node = node
-                            break
-                    else:
-                        final_node = node
-                        break
-    
-            if final_node is None:
-
-                """ If we're editing a page, we need to find
-                    the draft version of the page and turn it
-                    into a navigation node """
-
-                page = get_page_draft(Page.objects.get(id=id))
-
-                final_node = page_to_node(page, page, 0)
-
-            final_node.children = []
-            final_node.parent = []
+                if node.id == id and (namespace is None or node.namespace == namespace):
+                    final_node = node
+                    break
         except:
             logger.exception('Failed to find node')
-
+        if final_node is not None:
+            final_node.parent = None
+            final_node.children = []
         return final_node
 
 
