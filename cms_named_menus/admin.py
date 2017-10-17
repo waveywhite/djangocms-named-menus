@@ -1,5 +1,8 @@
 import json
 
+from django.utils.functional import Promise
+from django.utils.encoding import force_unicode
+
 from django.conf import settings
 from django.contrib import admin
 
