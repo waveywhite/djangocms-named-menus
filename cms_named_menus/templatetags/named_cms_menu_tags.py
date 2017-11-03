@@ -118,7 +118,7 @@ class ShowMultipleMenu(ShowMenu):
         final_node = None
         try:
             for node in nodes:
-                if node.id == id and (namespace is None or node.namespace == namespace):
+                if node.id == id and (not namespace or node.namespace == namespace):
                     final_node = node
                     break
         except:
