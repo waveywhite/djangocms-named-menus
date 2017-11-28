@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cmsnamedmenu',
             name='slug',
-            field=autoslug.fields.AutoSlugField(always_update=True, populate_from=b'name', editable=False),
+            field=autoslug.fields.AutoSlugField(always_update=True, populate_from='name', editable=False),
         ),
     ]
