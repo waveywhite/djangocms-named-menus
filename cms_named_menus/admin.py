@@ -9,6 +9,7 @@ from django.contrib import admin
 from cms_named_menus.models import CMSNamedMenu
 from cms_named_menus.nodes import get_nodes
 
+
 class LazyEncoder(json.JSONEncoder):
     """Encodes django's lazy i18n strings.
         Used to serialize translated strings to JSON, because
@@ -21,7 +22,6 @@ class LazyEncoder(json.JSONEncoder):
 
 
 class CMSNamedMenuAdmin(admin.ModelAdmin):
-
     change_form_template = 'cms_named_menus/change_form.html'
 
     readoly_fields = ('pages_json',)

@@ -1,4 +1,4 @@
-#/usr/bin/env python
+# /usr/bin/env python
 import codecs
 import os
 from setuptools import setup, find_packages
@@ -19,6 +19,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=1.6',
+        'classytags',
         'django-cms>=3.3',
         'jsonfield>=1.0.0',
         'django-autoslug>=1.7.2',

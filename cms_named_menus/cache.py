@@ -46,6 +46,7 @@ def delete_many(menu_slugs, lang=None):
     else:
         cache.delete_many(keys)
 
+
 def delete_by_page_id(page_id, lang=None):
     menu_slugs = []
     for menu in CMSNamedMenu.objects.all():

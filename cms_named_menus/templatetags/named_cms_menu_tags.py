@@ -12,17 +12,14 @@ from autoslug.utils import slugify
 from cms_named_menus.nodes import get_nodes
 from cms_named_menus.models import CMSNamedMenu
 
-
 logger = logging.getLogger(__name__)
 
 register = template.Library()
 
-
-NODES_REQUEST_CACHE_ATTR="named_cms_menu_nodes_cache"
+NODES_REQUEST_CACHE_ATTR = "named_cms_menu_nodes_cache"
 
 
 class ShowMultipleMenu(ShowMenu):
-
     name = 'show_named_menu'
 
     options = Options(
@@ -89,7 +86,7 @@ class ShowMultipleMenu(ShowMenu):
 
                 # Get the named menu nodes
                 arranged_nodes = self.get_named_menu_nodes(nodes, named_menu, namespace=namespace)
-                if len(arranged_nodes)>0:
+                if len(arranged_nodes) > 0:
                     logger.debug(u'Put %i menu "%s %s" to cache', len(arranged_nodes), menu_slug, lang)
                     cache.set(menu_slug, lang, arranged_nodes)
                 else:
@@ -106,7 +103,7 @@ class ShowMultipleMenu(ShowMenu):
     def arrange_nodes(self, node_list, node_config, namespace=None):
         arranged_nodes = []
         for item in node_config:
-            item.update({'namespace': namespace })
+            item.update({'namespace': namespace})
             node = self.create_node(item, node_list)
             if node is not None:
                 arranged_nodes.append(node)
@@ -121,7 +118,7 @@ class ShowMultipleMenu(ShowMenu):
         if item_node.attr.get('cms_named_menus_generate_children', False):
             # Dynamic children
             # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
-            child_items = [{ 'id' : node.id } for node in node_list if node.parent_id == item['id']]
+            child_items = [{'id': node.id} for node in node_list if node.parent_id == item['id']]
             if len(child_items) == 0:
                 logger.warn(u'Empty children for %s', item_node.title)
         else:
