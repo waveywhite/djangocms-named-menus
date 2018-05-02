@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import get_language
 from menus.templatetags.menu_tags import ShowMenu
 
+from autoslug.utils import slugify
 from cms_named_menus.nodes import get_nodes
 from cms_named_menus.models import CMSNamedMenu
 
@@ -38,7 +39,9 @@ class ShowMultipleMenu(ShowMenu):
 
     def get_context(self, context, **kwargs):
 
+        # Get the name and derive the slug - for the cache key
         menu_name = kwargs.pop('menu_name')
+        menu_slug = slugify(menu_name)
 
         context.update({
             'children': [],
@@ -51,37 +54,53 @@ class ShowMultipleMenu(ShowMenu):
         })
 
         lang = get_language()
-        
+
         request = context['request']
         namespace = kwargs['namespace']
         root_id = kwargs['root_id']
-        
-        arranged_nodes = cache.get(menu_name, lang)
+
+        # Try to get from Cache first
+        arranged_nodes = cache.get(menu_slug, lang)
+
+        # Create menu from Json if not
         if arranged_nodes is None:
-            logger.debug(u'Creating menu "%s %s"', menu_name, lang)
+            logger.debug(u'Creating menu "%s %s"', menu_slug, lang)
+            named_menu = None
+            arranged_nodes = []
+
+            # Get by Slug or from Menu name - backwards compatible
             try:
-                named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
+                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_name).pages
             except ObjectDoesNotExist:
-                logger.info(u'Named menu "%s %s" not found', menu_name, lang)
-                arranged_nodes = []
-            else:
+                try:
+                    named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
+                except ObjectDoesNotExist:
+                    logger.info(u'Named menu with name(slug): "%s (%s)" not found', menu_name, lang)
+
+            # If we get the named menu, build the nodes
+            if named_menu:
+                # Try to get all the navigation nodes from the cache, or repopulate if not
                 nodes = getattr(request, NODES_REQUEST_CACHE_ATTR, None)
                 if nodes is None:
                     nodes = get_nodes(request, namespace, root_id)
                     # getting nodes is slow, cache on request object will
                     # speedup if more than one named menus are on the page
                     setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
-                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
+
+                # Get the named menu nodes
+                arranged_nodes = self.get_named_menu_nodes(nodes, named_menu, namespace=namespace)
                 if len(arranged_nodes)>0:
-                    logger.debug(u'put %i menu "%s %s" to cache', len(arranged_nodes), menu_name, lang)
-                    cache.set(menu_name, lang, arranged_nodes)
+                    logger.debug(u'Put %i menu "%s %s" to cache', len(arranged_nodes), menu_slug, lang)
+                    cache.set(menu_slug, lang, arranged_nodes)
                 else:
-                    logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_name, lang)
+                    logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_slug, lang)
         else:
-            logger.debug(u'Fetched menu "%s %s" from cache', menu_name, lang)
+            logger.debug(u'Fetched menu "%s %s" from cache', menu_slug, lang)
+
         context.update({
             'children': arranged_nodes
         })
+
         return context
 
     def arrange_nodes(self, node_list, node_config, namespace=None):

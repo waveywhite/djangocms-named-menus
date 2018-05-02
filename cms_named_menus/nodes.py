@@ -27,4 +27,7 @@ def get_nodes(request, namespace=None, root_id=None):
     # Django CMS >= 3.3
     renderer = menu_pool.get_renderer(request)
 
-    return renderer.get_nodes(namespace=namespace, root_id=root_id, site_id=None, breadcrumb=False)
+    all_nodes = renderer.get_nodes(namespace=namespace, root_id=root_id, breadcrumb=False)
+    all_nodes = [node for node in all_nodes if not  node.attr.get('cms_named_menus_hidden', False) ]
+
+    return all_nodes
