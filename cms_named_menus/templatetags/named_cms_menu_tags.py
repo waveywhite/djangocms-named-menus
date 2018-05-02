@@ -85,7 +85,7 @@ class ShowMultipleMenu(ShowMenu):
                     setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
 
                 # Get the named menu nodes
-                arranged_nodes = self.get_named_menu_nodes(nodes, named_menu, namespace=namespace)
+                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
                 if len(arranged_nodes) > 0:
                     logger.debug(u'Put %i menu "%s %s" to cache', len(arranged_nodes), menu_slug, lang)
                     cache.set(menu_slug, lang, arranged_nodes)
