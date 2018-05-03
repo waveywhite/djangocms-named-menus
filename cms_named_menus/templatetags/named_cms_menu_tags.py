@@ -67,7 +67,7 @@ class ShowMultipleMenu(ShowMenu):
 
             # Get by Slug or from Menu name - backwards compatible
             try:
-                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_name).pages
+                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_slug).pages
             except ObjectDoesNotExist:
                 try:
                     named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
