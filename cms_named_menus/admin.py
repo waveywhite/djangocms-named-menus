@@ -39,10 +39,11 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
 
     def change_view(self, request, object_id, form_url='', extra_context={}):
+        available_pages = self.serialize_navigation(get_nodes(request))
         menu_pages = CMSNamedMenu.objects.get(id=object_id).pages
         extra_context = {
             'menu_pages': json.dumps(menu_pages),
-            'available_pages': self.serialize_navigation(request),
+            'available_pages': json.dumps(available_pages, cls=LazyEncoder),
             'debug': settings.DEBUG,
         }
         return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
