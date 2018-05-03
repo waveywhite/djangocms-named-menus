@@ -21,6 +21,16 @@ class LazyEncoder(json.JSONEncoder):
         return obj
 
 
+class SimpleNode(object):
+    id = None
+    title = None
+    children = []
+
+    def __init__(self, node):
+        self.id = node.id
+        self.title = node.title
+
+
 class CMSNamedMenuAdmin(admin.ModelAdmin):
     change_form_template = 'cms_named_menus/change_form.html'
 
@@ -37,17 +47,25 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
         }
         return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
 
-    def serialize_navigation(self, request):
-        nodes = get_nodes(request)
+    def serialize_navigation(self, all_nodes):
+        # Recursively convert nodes to simple nodes
         cleaned = []
+        for node in all_nodes:
+            if not node.parent_id:
+                cleaned_node = self.get_cleaned_node([node])
+                cleaned += cleaned_node
+
+        return cleaned
+
+    def get_cleaned_node(self, nodes):
+        # Clean node to be a simple title/id/children class
+        cleaned_nodes = []
         for node in nodes:
-            # Allow hiding from named menu selection
-            if node.attr.get('cms_named_menus_hidden', False):
-                continue
-            node.children = None
-            node.parent = None
-            cleaned.append(node.__dict__)
-        return json.dumps(cleaned, cls=LazyEncoder)
+            cleaned_node = SimpleNode(node)
+            if node.children:
+                cleaned_node.children = self.get_cleaned_node(node.children)
+            cleaned_nodes.append(cleaned_node.__dict__)
+        return cleaned_nodes
 
 
 admin.site.register(CMSNamedMenu, CMSNamedMenuAdmin)
