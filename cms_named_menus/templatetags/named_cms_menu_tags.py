@@ -131,6 +131,7 @@ class ShowMultipleMenu(ShowMenu):
         return item_node
 
     def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
+        from copy import deepcopy
         final_node = None
         try:
             for node in nodes:
@@ -142,7 +143,10 @@ class ShowMultipleMenu(ShowMenu):
         if final_node is not None:
             final_node.parent = None
             final_node.children = []
-        return final_node
+            # Return Deepcopy which allows duplicated nodes throughout
+            return deepcopy(final_node)
+
+        return None
 
 
 register.tag(ShowMultipleMenu)
