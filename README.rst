@@ -47,6 +47,11 @@ The following settings can be changed by adding to your project's settings.py fi
 
   CMS_NAMED_MENUS_NAMESPACES = ['CMSMenu',]
 
+or to allow all namespaces:
+
+.. code::
+
+  CMS_NAMED_MENUS_NAMESPACES = None
 
 
 
