@@ -8,7 +8,7 @@ from django.contrib import admin
 
 from cms_named_menus.models import CMSNamedMenu
 from cms_named_menus.nodes import get_nodes
-
+from cms_named_menus.settings import ALLOWED_NAMESPACES
 
 class LazyEncoder(json.JSONEncoder):
     """Encodes django's lazy i18n strings.
@@ -48,25 +48,34 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
         }
         return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
 
+
     def serialize_navigation(self, all_nodes):
         # Recursively convert nodes to simple nodes
         cleaned = []
         for node in all_nodes:
             if not node.parent_id:
                 cleaned_node = self.get_cleaned_node([node])
-                cleaned += cleaned_node
+                if cleaned_node:
+                    cleaned += cleaned_node
 
         return cleaned
+
 
     def get_cleaned_node(self, nodes):
         # Clean node to be a simple title/id/children class
         cleaned_nodes = []
         for node in nodes:
+            # Limit the namespaces, typically to CMS Page only, can be set to None to ignore this
+            if ALLOWED_NAMESPACES and node.namespace not in ALLOWED_NAMESPACES:
+                continue
             cleaned_node = SimpleNode(node)
             if node.children:
-                cleaned_node.children = self.get_cleaned_node(node.children)
+                child_nodes = self.get_cleaned_node(node.children)
+                if child_nodes:
+                    cleaned_node.children = child_nodes
             cleaned_nodes.append(cleaned_node.__dict__)
         return cleaned_nodes
+
 
 
 admin.site.register(CMSNamedMenu, CMSNamedMenuAdmin)
