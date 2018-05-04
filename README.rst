@@ -30,6 +30,23 @@ Next, create your menu in the admin area using the drag and drop interface.
 .. image:: ui.png
 
 
+Settings
+--------
+The following settings can be changed by adding to your prject's settings.py file:
+
+1. Override the default cache duration for Named Menus, default = 3600 seconds
+
+.. code::
+
+  CMS_NAMED_MENUS_CACHE_DURATION = 3600
+
+
+2. Set the application namespaces that can be used with Named Menus as a list, default is CMS pages only - as the page id will not be unique for other applications e.g. Aldryn NewsBlog etc. Default = ['CMSMenu',]
+
+.. code::
+
+  CMS_NAMED_MENUS_NAMESPACES = ['CMSMenu',]
+
 
 
 
