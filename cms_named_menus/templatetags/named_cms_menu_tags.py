@@ -8,18 +8,22 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import get_language
 from menus.templatetags.menu_tags import ShowMenu
 
-from autoslug.utils import slugify
+from slugify import slugify
+
 from cms_named_menus.nodes import get_nodes
 from cms_named_menus.models import CMSNamedMenu
+
 
 logger = logging.getLogger(__name__)
 
 register = template.Library()
 
-NODES_REQUEST_CACHE_ATTR = "named_cms_menu_nodes_cache"
+
+NODES_REQUEST_CACHE_ATTR="named_cms_menu_nodes_cache"
 
 
 class ShowMultipleMenu(ShowMenu):
+
     name = 'show_named_menu'
 
     options = Options(
@@ -57,22 +61,22 @@ class ShowMultipleMenu(ShowMenu):
         root_id = kwargs['root_id']
 
         # Try to get from Cache first
-        arranged_nodes = cache.get(menu_slug, lang)
+        named_menu_nodes = cache.get(menu_slug, lang)
 
         # Create menu from Json if not
-        if arranged_nodes is None:
+        if named_menu_nodes is None:
             logger.debug(u'Creating menu "%s %s"', menu_slug, lang)
             named_menu = None
-            arranged_nodes = []
+            named_menu_nodes = []
 
             # Get by Slug or from Menu name - backwards compatible
             try:
-                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_slug).pages
+                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_name).pages
             except ObjectDoesNotExist:
                 try:
                     named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
                 except ObjectDoesNotExist:
-                    logger.info(u'Named menu with name(slug): "%s (%s)" not found', menu_name, lang)
+                    logger.info(u'Named menu with name/slug: "%s %s" not found', menu_name, lang)
 
             # If we get the named menu, build the nodes
             if named_menu:
@@ -85,65 +89,72 @@ class ShowMultipleMenu(ShowMenu):
                     setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
 
                 # Get the named menu nodes
-                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
-                if len(arranged_nodes) > 0:
-                    logger.debug(u'Put %i menu "%s %s" to cache', len(arranged_nodes), menu_slug, lang)
-                    cache.set(menu_slug, lang, arranged_nodes)
+                named_menu_nodes = self.get_named_menu_nodes(nodes, named_menu, namespace=namespace)
+                if len(named_menu_nodes)>0:
+                    logger.debug(u'Put %i menu "%s %s" to cache', len(named_menu_nodes), menu_slug, lang)
+                    cache.set(menu_slug, lang, named_menu_nodes)
                 else:
                     logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_slug, lang)
         else:
             logger.debug(u'Fetched menu "%s %s" from cache', menu_slug, lang)
-
         context.update({
-            'children': arranged_nodes
+            'children': named_menu_nodes
         })
-
         return context
 
-    def arrange_nodes(self, node_list, node_config, namespace=None):
-        arranged_nodes = []
-        for item in node_config:
-            item.update({'namespace': namespace})
-            node = self.create_node(item, node_list)
-            if node is not None:
-                arranged_nodes.append(node)
-        return arranged_nodes
 
-    def create_node(self, item, node_list):
-        namespace = item['namespace']
-        item_node = self.get_node_by_id(item['id'], node_list, namespace)
+    def get_named_menu_nodes(self, node_list, named_menu_config, namespace=None):
+        named_menu_nodes = []
+        for item in named_menu_config:
+            node = self.create_node(item, node_list, namespace)
+            if node is not None:
+                named_menu_nodes.append(node)
+        return named_menu_nodes
+
+
+    def create_node(self, item, node_list, namespace=None, level=-1):
+        level += 1
+        item_node = self.get_node_by_url(item, node_list, namespace)
         if item_node is None:
             return None
 
+        item_node.level = level
         if item_node.attr.get('cms_named_menus_generate_children', False):
             # Dynamic children
-            # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
-            child_items = [{'id': node.id} for node in node_list if node.parent_id == item['id']]
+            # NOTE: We have to collect the children manually because get_node_by_url cleans the hierarchy
+            child_items = [{ 'url' : node.url } for node in node_list if node.parent.url == item['url']]
             if len(child_items) == 0:
                 logger.warn(u'Empty children for %s', item_node.title)
         else:
             # Defined in the menu
             child_items = item.get('children', [])
+
+        # Assign Child nodes as defined in the custom menu
         for child_item in child_items:
-            child_node = self.get_node_by_id(child_item['id'], node_list, namespace)
+            # child_node = self.get_node_by_url(child_item, node_list, namespace)
+            child_node = self.create_node(child_item, node_list, namespace, level)
             if child_node is not None:
                 item_node.children.append(child_node)
+
         return item_node
 
-    def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
+
+    def get_node_by_url(self, item, nodes, namespace):  # @ReservedAssignment
         from copy import deepcopy
+
+        url = item['url']
         final_node = None
         try:
             for node in nodes:
-                if node.id == id and (not namespace or node.namespace == namespace):
+                if node.get_absolute_url() == url and (not namespace or node.namespace == namespace):
                     final_node = node
                     break
         except:
             logger.exception('Failed to find node')
+        # Return Deepcopy
         if final_node is not None:
             final_node.parent = None
             final_node.children = []
-            # Return Deepcopy which allows duplicated nodes throughout
             return deepcopy(final_node)
 
         return None

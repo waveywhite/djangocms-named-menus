@@ -3,7 +3,6 @@ require 'jquery-nestable'
 _ = require 'underscore'
 Backbone = require 'backbone'
 
-
 module.exports = class CMSNamedMenuAdmin extends Backbone.View
 
     nestableOptions:
@@ -12,7 +11,7 @@ module.exports = class CMSNamedMenuAdmin extends Backbone.View
         collapseBtnHTML: '<span class="toggle" data-action="collapse">-</span>'
 
     itemTemplate: _.template('<li class="dd-item" \
-                                  data-id="<%= id %>" \
+                                  data-url="<%= url %>" \
                                   data-title="<%= title %>"> \
                                   <div class="dd-handle"><%= title %></div> \
                               </li>')

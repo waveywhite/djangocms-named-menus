@@ -47,10 +47,43 @@ def delete_many(menu_slugs, lang=None):
         cache.delete_many(keys)
 
 
-def delete_by_page_id(page_id, lang=None):
+def delete_by_page_url(url, lang=None):
     menu_slugs = []
     for menu in CMSNamedMenu.objects.all():
-        if contains_page(menu, page_id):
-            menu_slugs.append(menu.name)
+        if contains_page(menu, url):
+            menu_slugs.append(menu.slug)
     if menu_slugs:
         delete_many(menu_slugs, lang)
+
+
+def update_changed_menu(prev_url, new_url, lang=None):
+    changed_menu_names = []
+    for menu in CMSNamedMenu.objects.all():
+        changed, menu_pages = replace_urls(menu.pages, prev_url, new_url)
+        menu.pages = menu_pages
+        if changed:
+            menu.save()
+            changed_menu_names.append(menu.name)
+
+    if changed_menu_names:
+        delete_many(changed_menu_names, lang)
+
+
+def replace_urls(menu_pages, prev_url, new_url=None):
+    changed = False
+    for idx, page in enumerate(menu_pages):
+        if page['url'] == prev_url:
+            if new_url:
+                page['url'] = new_url
+            else:
+                # Remove if no replacement url
+                del menu_pages[idx]
+            changed = True
+        if menu_pages[idx]:
+            children = page.get('children', [])
+            if children:
+                changed, page['children'] = replace_urls(children, prev_url, new_url)
+            if changed:
+                menu_pages[idx] = page
+
+    return changed, menu_pages

@@ -72,7 +72,7 @@ var App =
 	    collapseBtnHTML: '<span class="toggle" data-action="collapse">-</span>'
 	  };
 	
-	  CMSNamedMenuAdmin.prototype.itemTemplate = _.template('<li class="dd-item" data-id="<%= id %>" data-title="<%= title %>"> <div class="dd-handle"><%= title %></div> </li>');
+	  CMSNamedMenuAdmin.prototype.itemTemplate = _.template('<li class="dd-item" data-url="<%= url %>" data-title="<%= title %>"> <div class="dd-handle"><%= title %></div> </li>');
 	
 	  CMSNamedMenuAdmin.prototype.events = {
 	    'change .menu-pages': 'updateJSON'

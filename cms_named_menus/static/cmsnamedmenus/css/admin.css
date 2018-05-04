@@ -80,7 +80,6 @@
 }
 .dd-handle {
   display: block;
-  min-height: 30px;
   margin: 5px 0;
   padding: 5px 10px;
   color: #333;

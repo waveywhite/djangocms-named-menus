@@ -1,0 +1,17 @@
+1. Node Id is not unique for generated/apphook apps e.g. Aldryn Events, Jobs etc.
+    - Use URL as the unique identifier
+    - Change JS / Coffee Script, admin.py etc.
+2. Using Menu Name in the cache key can cause issues i.e. with spaces / bad chars
+    - Use the menu slug instead
+    - slug can be passed directly, or looked up if Menu name is passed in?
+    - add python-slugify to requirements
+3. Signals do not update a custom menu if Title/URL are changed
+    - Change menu generation to use dynamically sourced title from Navigation nodes
+    - Trigger change of custom menu for saved page with new slug/url..
+4. Using get_absolute_url as the identifier allows draft/published
+    - remove published only (anonymous) view on navigation nodes
+5. Levels were being ignored
+    - introduce levels, set levels when building the json menu
+    - set the template tag to recursively get all nodes
+
+needed to remove existing named menu items... may need to set up a migration script for this...

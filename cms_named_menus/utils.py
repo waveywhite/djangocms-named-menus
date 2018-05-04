@@ -4,12 +4,11 @@ Created on May 21, 2016
 
 @author: jakob
 '''
-
-
-def contains_page(menu, page_id):
+def contains_page(menu, url):
     for page in menu.pages:
-        if page['id'] == page_id:
+        if page['url'] == url:
             return True
         for child in page.get('children', []):
-            if child['id'] == page_id:
+            if child['url'] == url:
                 return True
+
