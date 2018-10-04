@@ -103,14 +103,13 @@ class ShowMultipleMenu(ShowMenu):
     def arrange_nodes(self, node_list, node_config, namespace=None):
         arranged_nodes = []
         for item in node_config:
-            item.update({'namespace': namespace})
-            node = self.create_node(item, node_list)
+            node = self.create_node(item, node_list, namespace)
             if node is not None:
                 arranged_nodes.append(node)
         return arranged_nodes
 
-    def create_node(self, item, node_list):
-        namespace = item['namespace']
+    def create_node(self, item, node_list, namespace=None):
+        # Get Item node
         item_node = self.get_node_by_id(item['id'], node_list, namespace)
         if item_node is None:
             return None
@@ -122,13 +121,18 @@ class ShowMultipleMenu(ShowMenu):
             if len(child_items) == 0:
                 logger.warn(u'Empty children for %s', item_node.title)
         else:
-            # Defined in the menu
+            # Child menu items defined in the menu
             child_items = item.get('children', [])
-        for child_item in child_items:
-            child_node = self.get_node_by_id(child_item['id'], node_list, namespace)
-            if child_node is not None:
-                item_node.children.append(child_node)
+
+        # If child items, call recursively
+        if child_items:
+            for child_item in child_items:
+                child_node = self.create_node(child_item, node_list, namespace)
+                if child_node:
+                    item_node.children.append(child_node)
+
         return item_node
+
 
     def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
         from copy import deepcopy
