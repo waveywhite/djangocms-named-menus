@@ -8,7 +8,7 @@ from django.contrib import admin
 
 from cms_named_menus.models import CMSNamedMenu
 from cms_named_menus.nodes import get_nodes
-
+from cms_named_menus.settings import ALLOWED_NAMESPACES
 
 class LazyEncoder(json.JSONEncoder):
     """Encodes django's lazy i18n strings.
@@ -21,34 +21,62 @@ class LazyEncoder(json.JSONEncoder):
         return obj
 
 
+class SimpleNode(object):
+    id = None
+    title = None
+    children = []
+
+    def __init__(self, node):
+        self.id = node.id
+        self.title = node.title
+
+
 class CMSNamedMenuAdmin(admin.ModelAdmin):
     change_form_template = 'cms_named_menus/change_form.html'
 
-    readoly_fields = ('pages_json',)
+    # readonly_fields = ('pages',)
+
+    list_display = ('name', 'slug')
 
     def change_view(self, request, object_id, form_url='', extra_context={}):
+        available_pages = self.serialize_navigation(get_nodes(request))
         menu_pages = CMSNamedMenu.objects.get(id=object_id).pages
         extra_context = {
-            'menu_pages': json.dumps(menu_pages),
-            'available_pages': self.serialize_navigation(request),
+            'menu_pages': menu_pages,
+            'available_pages': available_pages,
+            'available_pages_json': json.dumps(available_pages,  cls=LazyEncoder),
             'debug': settings.DEBUG,
         }
         return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
 
-    def serialize_navigation(self, request):
-        nodes = get_nodes(request)
+
+    def serialize_navigation(self, all_nodes):
+        # Recursively convert nodes to simple nodes
         cleaned = []
+        for node in all_nodes:
+            if not node.parent_id:
+                cleaned_node = self.get_cleaned_node([node])
+                if cleaned_node:
+                    cleaned += cleaned_node
+
+        return cleaned
+
+
+    def get_cleaned_node(self, nodes):
+        # Clean node to be a simple title/id/children class
+        cleaned_nodes = []
         for node in nodes:
-            # Allow hiding from named menu selection
-            if node.attr.get('cms_named_menus_hidden', False):
+            # Limit the namespaces, typically to CMS Page only, can be set to None to ignore this
+            if ALLOWED_NAMESPACES and node.namespace not in ALLOWED_NAMESPACES:
                 continue
-            node.children = None
-            node.parent = None
-            node_dict = node.__dict__
-            node_dict['title'] = node_dict['title'].rjust(len(node_dict['title']) + int(node_dict['level']), ">")
-            node_dict['title'] = node_dict['title'].replace(">", " - ")
-            cleaned.append(node_dict)
-        return json.dumps(cleaned, cls=LazyEncoder)
+            cleaned_node = SimpleNode(node)
+            if node.children:
+                child_nodes = self.get_cleaned_node(node.children)
+                if child_nodes:
+                    cleaned_node.children = child_nodes
+            cleaned_nodes.append(cleaned_node.__dict__)
+
+        return cleaned_nodes # json.dumps(cleaned_nodes, cls=LazyEncoder)
 
 
 admin.site.register(CMSNamedMenu, CMSNamedMenuAdmin)

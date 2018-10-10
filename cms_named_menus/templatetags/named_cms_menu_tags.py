@@ -108,6 +108,7 @@ class ShowMultipleMenu(ShowMenu):
                 arranged_nodes.append(node)
         return arranged_nodes
 
+
     def create_node(self, item, node_list, namespace=None):
         # Get Item node
         item_node = self.get_node_by_id(item['id'], node_list, namespace)

@@ -1,5 +1,6 @@
 {% load static %}
 
+<link type="text/css" rel="stylesheet" href="{% static "cmsnamedmenus/ext/jquery.nestable.min.css" %}"/>
 <link type="text/css" rel="stylesheet" href="{% static "cmsnamedmenus/css/admin.css" %}" />
 
 {% if not line.fields|length_is:'1' and not field.is_readonly %}
@@ -20,22 +21,93 @@
     <p class="help">{{ field.field.help_text|safe }}</p>
 {% endif %}
 
-
 <section class="pages">
-    <aside class="menu-pages dd">
-        <h3>Selected Pages</h3>
-    </aside>
 
-    <aside class="available-pages dd">
+    <div class="selected">
+        <h3>Selected Pages</h3>
+        <aside class="menu-pages dd">
+            <ol class="dd-list">
+                {% for page in menu_pages %}
+                    {% include 'cms_named_menus/nestable_item.html' %}
+                {% endfor %}
+            </ol>
+        </aside>
+    </div>
+
+    <div class="available">
         <h3>Available Pages</h3>
-    </aside>
+        <div class="checkbox">
+            <label><input id="include_child_items" type="checkbox">Include Child Items?</label>
+        </div>
+        <aside class="available-pages dd">
+            <ol class="dd-list">
+                {% for page in available_pages %}
+                    {% include 'cms_named_menus/nestable_item.html' %}
+                {% endfor %}
+            </ol>
+        </aside>
+    </div>
 </section>
 
-<script src="{% static "cmsnamedmenus/js/admin.js" %}"></script>
+
+<script src="{% static "cmsnamedmenus/ext/jquery-3.3.1.min.js" %}"></script>
+<script src="{% static "cmsnamedmenus/ext/jquery-ui.min.js" %}"></script>
+<script src="{% static "cmsnamedmenus/ext/jquery.nestable.min.js" %}"></script>
+
 <script>
-    var app = new App({
-        menuPages: {{ menu_pages|safe }},
-        availablePages: {{ available_pages|safe }},
-        el: '.pages'
-    });
+
+    var availablePages = {{ available_pages_json|safe }};
+
+    // Output the new menu pages on change
+    function get_data(){
+        var data;
+        data = $(".menu-pages.dd").nestable('serialize');
+        $('#id_pages').val(JSON.stringify(data));
+    }
+
+    // Rebuild the original list of available pages - as this shouldn't change
+    function beforeDragStop(l, e, p){
+        available_pages_options.json = availablePages;
+        $('.available-pages.dd').nestable('destroy').nestable(available_pages_options);//.nestable('removeAll')
+    }
+
+    // Remove child elements on click-drag - if set
+    function onDragStart(l, e, p){
+        if (!$('#include_child_items').is(":checked")) {
+            if (e[0].children.length > 1) {
+                for (i = 1; i < e[0].children.length; i++) {
+                    e[0].children[i].remove();
+                }
+            }
+        }
+    }
+
+    // Output the content for the available pages when they're rebuilt
+    function contentCallback(item) {
+        return item.content || '' ? item.content : '≡' + item.title;
+    }
+
+    // Standard options for each menu
+    options = {
+        scroll: true,
+        group: 1,
+        expandBtnHTML: '',
+        collapseBtnHTML: ''
+    };
+
+    // Options for selected menus
+    menu_pages_options = options;
+    menu_pages_options.callback = get_data;
+    menu_pages_options.beforeDragStop = beforeDragStop;
+
+
+    // Options for available pages
+    available_pages_options = options;
+    available_pages_options.onDragStart = onDragStart;
+    available_pages_options.contentCallback = contentCallback;
+
+    // Build nestable menus
+    $('.menu-pages.dd').nestable(menu_pages_options);
+    $('.available-pages.dd').nestable(available_pages_options);
+
 </script>
