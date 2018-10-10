@@ -92,17 +92,16 @@
         scroll: true,
         group: 1,
         expandBtnHTML: '',
-        collapseBtnHTML: ''
+        collapseBtnHTML: '',
+        beforeDragStop: beforeDragStop
     };
 
     // Options for selected menus
-    menu_pages_options = options;
+    menu_pages_options = $.extend({}, options);
     menu_pages_options.callback = get_data;
-    menu_pages_options.beforeDragStop = beforeDragStop;
-
 
     // Options for available pages
-    available_pages_options = options;
+    available_pages_options = $.extend({}, options);
     available_pages_options.onDragStart = onDragStart;
     available_pages_options.contentCallback = contentCallback;
 
