@@ -44,3 +44,6 @@
 .field-pages p.help {
   display: none;
 }
+.dd-handle {
+    height:auto;
+}
