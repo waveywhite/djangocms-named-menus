@@ -26,11 +26,13 @@
     <div class="selected">
         <h3>Selected Pages</h3>
         <aside class="menu-pages dd">
-            <ol class="dd-list">
-                {% for page in menu_pages %}
-                    {% include 'cms_named_menus/nestable_item.html' %}
-                {% endfor %}
-            </ol>
+            {%if menu_pages %}
+                <ol class="dd-list">
+                    {% for page in menu_pages %}
+                        {% include 'cms_named_menus/nestable_item.html' %}
+                    {% endfor %}
+                </ol>
+            {% endif %}
         </aside>
     </div>
 
@@ -52,23 +54,23 @@
 
 <script src="{% static "cmsnamedmenus/ext/jquery-3.3.1.min.js" %}"></script>
 <script src="{% static "cmsnamedmenus/ext/jquery-ui.min.js" %}"></script>
-<script src="{% static "cmsnamedmenus/ext/jquery.nestable.min.js" %}"></script>
+<script src="{% static "cmsnamedmenus/ext/jquery.nestable.js" %}"></script>
 
 <script>
 
     var availablePages = {{ available_pages_json|safe }};
 
     // Output the new menu pages on change
-    function get_data(){
+    function get_data(l, e, p){
         var data;
-        data = $(".menu-pages.dd").nestable('serialize');
+        data = $('.menu-pages.dd').nestable('serialize');
         $('#id_pages').val(JSON.stringify(data));
     }
 
     // Rebuild the original list of available pages - as this shouldn't change
     function beforeDragStop(l, e, p){
         available_pages_options.json = availablePages;
-        $('.available-pages.dd').nestable('destroy').nestable(available_pages_options);//.nestable('removeAll')
+        $('.available-pages.dd').nestable('destroy').nestable(available_pages_options);
     }
 
     // Remove child elements on click-drag - if set
@@ -93,12 +95,12 @@
         group: 1,
         expandBtnHTML: '',
         collapseBtnHTML: '',
-        beforeDragStop: beforeDragStop
+        callback: get_data,
+        beforeDragStop: beforeDragStop,
     };
 
     // Options for selected menus
     menu_pages_options = $.extend({}, options);
-    menu_pages_options.callback = get_data;
 
     // Options for available pages
     available_pages_options = $.extend({}, options);
