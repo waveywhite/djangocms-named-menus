@@ -3,6 +3,7 @@ import json
 from django.utils.functional import Promise
 from django.utils.encoding import force_unicode
 
+from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
 from django.contrib import admin
 
@@ -34,9 +35,14 @@ class SimpleNode(object):
 class CMSNamedMenuAdmin(admin.ModelAdmin):
     change_form_template = 'cms_named_menus/change_form.html'
 
-    # readonly_fields = ('pages',)
+    readonly_fields = ('site',)
 
-    list_display = ('name', 'slug')
+    list_display = ('name', 'slug', 'site')
+
+    def get_queryset(self, request):
+        qs = super(CMSNamedMenuAdmin, self).get_queryset(request)
+        current_site = get_current_site(request)
+        return qs.filter(site=current_site)
 
     def change_view(self, request, object_id, form_url='', extra_context={}):
         available_pages = self.serialize_navigation(get_nodes(request))

@@ -1,7 +1,7 @@
 {% load static %}
 
 <link type="text/css" rel="stylesheet" href="{% static "cmsnamedmenus/ext/jquery.nestable.min.css" %}"/>
-<link type="text/css" rel="stylesheet" href="{% static "cmsnamedmenus/css/admin.css" %}" />
+<link type="text/css" rel="stylesheet" href="{% static "cmsnamedmenus/css/admin.min.css" %}" />
 
 {% if not line.fields|length_is:'1' and not field.is_readonly %}
 {{ field.errors }}
