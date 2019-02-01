@@ -26,9 +26,12 @@ class CMSNamedMenu(models.Model):
                              help_text=_('The site the menu is accessible at.'),
                              verbose_name=_("site"),
                              default=get_current_site)
-    
-    def __unicode__(self):
+
+    def __str__(self):
         return self.name
+
+    def __unicode__(self):
+        return self.__str__()
 
     class Meta:
         verbose_name = "CMS Menu"
