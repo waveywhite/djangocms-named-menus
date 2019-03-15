@@ -43,7 +43,13 @@ After installation, place the ``{% show_named_menu 'MenuName' %}`` template tag 
 
 Next, create your menu in the admin area using the drag and drop interface.
 
+Drag items with child menu items:
+
 .. image:: ui.png
+
+Drag items without child menu items:
+
+.. image:: ui2.png
 
 
 Settings
