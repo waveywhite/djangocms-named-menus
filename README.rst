@@ -1,16 +1,32 @@
 Django CMS Named Menus
-=====================
+======================
 
 An extension for Django CMS that allows you to create multiple menus like Wordpress
 
+Replaced
+--------
+**This replaces the previous versions by Ryan Bagwell and Rogerio Carrasqueira which are no longer actively updated**
+
+Originally forked from:
+
+- https://github.com/rgcarrasqueira/django-cms-named-menus
+- https://github.com/ryanbagwell/django-cms-named-menus
 
 Installation
 ------------
 
-1. Install with pip ``pip install django-cms-named-menus``
+1. Install with pip ``pip install djangocms-named-menus``
 
 2. Add ``cms_named_menus`` to INSTALLED_APPS
 
+3. Run migrations ``python manage.py migrate``
+
+Upgrading from Previous Version
+-------------------------------
+
+1. Uninstall previous version with pip ``pip uninstall -y django-cms-named-menus``
+
+2. The migrations and code will pick up previous versions correctly.
 
 Usage
 -----

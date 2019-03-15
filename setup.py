@@ -6,19 +6,18 @@ from setuptools import setup, find_packages
 read = lambda filepath: codecs.open(filepath, 'r', 'utf-8').read()
 
 setup(
-    name='django-cms-named-menus',
-    version='0.2.1',
+    name='djangocms-named-menus',
+    version='1.0.0',
     description='Allows you to add named menus like Wordpress',
     long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
-    author='Ryan Bagwell',
-    author_email='ryan@ryanbagwell.com',
+    author='Ryan Bagwell, Rogerio Carrasqueira, Michael Carder',
     license='BSD',
-    url='https://github.com/ryanbagwell/django-cms-named-menus/',
+    url='https://github.com/mcldev/djangocms-named-menus',
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
     install_requires=[
-        'Django>=1.6',
+        'Django>=1.11',
         'django-classy-tags',
         'django-cms>=3.3',
         'jsonfield>=1.0.0',
@@ -30,7 +29,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.11',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',

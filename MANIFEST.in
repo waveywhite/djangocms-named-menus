@@ -4,4 +4,4 @@ recursive-include */static *
 recursive-include */templates *
 recursive-include */boilerplates *
 
-recursive-exclude *.pyc .bowerrc bower.json Gruntfile.coffee package.json node_modules
+recursive-exclude *.pyc
