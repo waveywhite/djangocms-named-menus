@@ -2,9 +2,7 @@
 # https://packaging.python.org/tutorials/packaging-projects/
 
 # Install required
-pip install --upgrade setuptools
-pip install --upgrade wheel
-pip install --upgrade twine
+pip install --upgrade setuptools wheel twine
 
 # Build the dist
 py -3 setup.py sdist bdist_wheel
