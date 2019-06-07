@@ -6,8 +6,8 @@ from classytags.core import Options
 from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import get_language
-from menus.templatetags.menu_tags import ShowMenu
-
+from menus.templatetags.menu_tags import ShowMenu, flatten, cut_levels
+from copy import deepcopy
 from autoslug.utils import slugify
 from cms_named_menus.nodes import get_nodes
 from cms_named_menus.models import CMSNamedMenu
@@ -16,10 +16,95 @@ logger = logging.getLogger(__name__)
 
 register = template.Library()
 
-NODES_REQUEST_CACHE_ATTR = "named_cms_menu_nodes_cache"
+
+def clean_node(node, level, namespace):
+
+    # Remove nodes not in this namespace
+    if namespace and not node.namespace == namespace:
+        return None
+
+    node.parent = None
+    node.children = []
+    node.level = level
+    # Return Deepcopy which allows duplicated nodes throughout
+    return deepcopy(node)
 
 
-class ShowMultipleMenu(ShowMenu):
+# Create a cleaned copy of node, called recursively with children
+def create_node(item, page_nodes, level=0, namespace=None):
+
+    # Id and Child menu items defined in named menu
+    page_id = item['id']
+    child_items = item.get('children', [])
+
+    # Return none if the page_id in the json is no longer in the node page ids
+    if page_id not in page_nodes:
+        return None
+
+    # Get Page node cleaned
+    page_node = page_nodes[page_id]
+
+    page_node = clean_node(page_node, level, namespace)
+
+    if page_node is None:
+        return None
+
+    # If child items, call recursively to add child nodes
+    if child_items:
+        level += 1
+        for child_item in child_items:
+            child_node = create_node(child_item, page_nodes, level=level, namespace=namespace)
+            if child_node:
+                child_node.parent = page_node
+                page_node.children.append(child_node)
+
+    return page_node
+
+
+# Build the named menu
+def build_named_menu_nodes(menu_slug, page_nodes, namespace=None):
+
+    if not page_nodes:
+        return
+
+    logger.debug(u'Creating Named Menu: "{}"'.format(menu_slug))
+
+    # Get named menu from cache if available
+    named_menu = cache.get(menu_slug)
+    if named_menu:
+        return named_menu
+
+    # Rebuild named menu if not cached - post-cut/levels/etc happens after
+    # --------------------------------
+
+    # Get by Slug or from Menu name - backwards compatible
+    try:
+        named_menu = CMSNamedMenu.objects.get(slug__exact=menu_slug).pages
+    except ObjectDoesNotExist:
+        try:
+            named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
+        except ObjectDoesNotExist:
+            logger.info(u'Named menu with name(slug): "%s (%s)" not found', menu_name, lang)
+
+    # If we get the named menu, build the nodes
+    if named_menu:
+        named_menu_nodes = []
+
+        for item in named_menu:
+            # Loops through each {'id':[page_id], 'children':[,, etc
+            # Maps nodes and child nodes
+            node = create_node(item, page_nodes, namespace=namespace)
+            if node is not None:
+                named_menu_nodes.append(node)
+
+        # Cache named menu to avoid repeated queries
+        cache.set(menu_slug, named_menu_nodes)
+
+        return named_menu_nodes
+
+
+class ShowNamedMenu(ShowMenu):
+
     name = 'show_named_menu'
 
     options = Options(
@@ -34,124 +119,55 @@ class ShowMultipleMenu(ShowMenu):
         Argument('next_page', default=None, required=False),
     )
 
-    def get_context(self, context, **kwargs):
+    def get_context(self, context, menu_name, from_level, to_level, extra_inactive,
+                    extra_active, template, namespace, root_id, next_page):
 
-        # Get the name and derive the slug - for the cache key
-        menu_name = kwargs.pop('menu_name')
-        menu_slug = slugify(menu_name)
+        # From menus.template_tags.menu_tags.py
+        try:
+            # If there's an exception (500), default context_processors may not be called.
+            request = context['request']
+        except KeyError:
+            return {'template': 'menu/empty.html'}
 
-        context.update({
-            'children': [],
-            'template': kwargs.get('template'),
-            'from_level': kwargs.get('from_level'),
-            'to_level': kwargs.get('to_level'),
-            'extra_inactive': kwargs.get('extra_inactive'),
-            'extra_active': kwargs.get('extra_active'),
-            'namespace': kwargs.get('namespace')
-        })
+        if next_page:
+            children = next_page.children
 
-        lang = get_language()
-
-        request = context['request']
-        namespace = kwargs['namespace']
-        root_id = kwargs['root_id']
-
-        # Try to get from Cache first
-        arranged_nodes = cache.get(menu_slug, lang)
-
-        # Create menu from Json if not
-        if arranged_nodes is None:
-            logger.debug(u'Creating menu "%s %s"', menu_slug, lang)
-            named_menu = None
-            arranged_nodes = []
-
-            # Get by Slug or from Menu name - backwards compatible
-            try:
-                named_menu = CMSNamedMenu.objects.get(slug__exact=menu_slug).pages
-            except ObjectDoesNotExist:
-                try:
-                    named_menu = CMSNamedMenu.objects.get(name__iexact=menu_name).pages
-                except ObjectDoesNotExist:
-                    logger.info(u'Named menu with name(slug): "%s (%s)" not found', menu_name, lang)
-
-            # If we get the named menu, build the nodes
-            if named_menu:
-                # Try to get all the navigation nodes from the cache, or repopulate if not
-                nodes = getattr(request, NODES_REQUEST_CACHE_ATTR, None)
-                if nodes is None:
-                    nodes = get_nodes(request, namespace, root_id)
-                    # getting nodes is slow, cache on request object will
-                    # speedup if more than one named menus are on the page
-                    setattr(request, NODES_REQUEST_CACHE_ATTR, nodes)
-
-                # Get the named menu nodes
-                arranged_nodes = self.arrange_nodes(nodes, named_menu, namespace=namespace)
-                if len(arranged_nodes) > 0:
-                    logger.debug(u'Put %i menu "%s %s" to cache', len(arranged_nodes), menu_slug, lang)
-                    cache.set(menu_slug, lang, arranged_nodes)
-                else:
-                    logger.debug(u'Don\'t cache empty "%s %s" menu!', menu_slug, lang)
         else:
-            logger.debug(u'Fetched menu "%s %s" from cache', menu_slug, lang)
+            # Get the name and derive the slug - for the cache key
+            menu_slug = slugify(menu_name)
 
-        context.update({
-            'children': arranged_nodes
-        })
+            # # Pre-Cut ... get all the node data so we can save a lot of queries
+            # Filters in 'is_page' and excludes 'cms_named_menus_hidden'
+            nodes, menu_renderer = get_nodes(request, namespace=namespace, root_id=root_id)
+
+            # Ceate a page_node dictionary
+            page_nodes = {n.id: n for n in nodes}
+
+            # Build or get from cache - Named menu nodes
+            nodes = build_named_menu_nodes(menu_slug, page_nodes, namespace=namespace)
+
+            # If nodes returned, then cut levels and apply modifiers
+            if nodes:
+                # Post-Cut ... apply cut levels and menu modifiers
+                nodes = flatten(nodes)
+                children = cut_levels(nodes, from_level, to_level, extra_inactive, extra_active)
+                children = menu_renderer.apply_modifiers(children, namespace, root_id, post_cut=True)
+            else:
+                children = []
+
+        # Return the context, or go straight to template which will present missing etc.
+        try:
+            context['children'] = children
+            context['template'] = template
+            context['from_level'] = from_level
+            context['to_level'] = to_level
+            context['extra_inactive'] = extra_inactive
+            context['extra_active'] = extra_active
+            context['namespace'] = namespace
+        except:
+            context = {"template": template}
 
         return context
 
-    def arrange_nodes(self, node_list, node_config, namespace=None):
-        arranged_nodes = []
-        for item in node_config:
-            node = self.create_node(item, node_list, namespace)
-            if node is not None:
-                arranged_nodes.append(node)
-        return arranged_nodes
 
-
-    def create_node(self, item, node_list, namespace=None):
-        # Get Item node
-        item_node = self.get_node_by_id(item['id'], node_list, namespace)
-        if item_node is None:
-            return None
-
-        if item_node.attr.get('cms_named_menus_generate_children', False):
-            # Dynamic children
-            # NOTE: We have to collect the children manually because get_node_by_id cleans the hierarchy
-            child_items = [{'id': node.id} for node in node_list if node.parent_id == item['id']]
-            if len(child_items) == 0:
-                logger.warn(u'Empty children for %s', item_node.title)
-        else:
-            # Child menu items defined in the menu
-            child_items = item.get('children', [])
-
-        # If child items, call recursively
-        if child_items:
-            for child_item in child_items:
-                child_node = self.create_node(child_item, node_list, namespace)
-                if child_node:
-                    item_node.children.append(child_node)
-
-        return item_node
-
-
-    def get_node_by_id(self, id, nodes, namespace):  # @ReservedAssignment
-        from copy import deepcopy
-        final_node = None
-        try:
-            for node in nodes:
-                if node.id == id and (not namespace or node.namespace == namespace):
-                    final_node = node
-                    break
-        except:
-            logger.exception('Failed to find node')
-        if final_node is not None:
-            final_node.parent = None
-            final_node.children = []
-            # Return Deepcopy which allows duplicated nodes throughout
-            return deepcopy(final_node)
-
-        return None
-
-
-register.tag(ShowMultipleMenu)
+register.tag(ShowNamedMenu)

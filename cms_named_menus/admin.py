@@ -45,7 +45,8 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
         return qs.filter(site=current_site)
 
     def change_view(self, request, object_id, form_url='', extra_context={}):
-        available_pages = self.serialize_navigation(get_nodes(request))
+        nodes, menu_renderer = get_nodes(request)
+        available_pages = self.serialize_navigation(nodes)
         menu_pages = CMSNamedMenu.objects.get(id=object_id).pages
         extra_context = {
             'menu_pages': menu_pages,
