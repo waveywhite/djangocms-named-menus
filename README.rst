@@ -3,8 +3,8 @@ Django CMS Named Menus
 
 An extension for Django CMS that allows you to create multiple menus like Wordpress
 
-Replaced
---------
+Replaces Previous Versions
+--------------------------
 **This replaces the previous versions by Ryan Bagwell and Rogerio Carrasqueira which are no longer actively updated**
 
 Originally forked from:
