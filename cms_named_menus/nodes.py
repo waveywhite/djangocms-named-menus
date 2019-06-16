@@ -19,6 +19,10 @@ def anonymous_request(f):
     return decorator
 
 
+def filter_nodes(nodes):
+    return [node for node in nodes if not node.attr.get('cms_named_menus_hidden', False) and node.attr.get("is_page", False)]
+
+
 @anonymous_request
 def get_nodes(request, namespace=None, root_id=None):
 
@@ -27,6 +31,7 @@ def get_nodes(request, namespace=None, root_id=None):
 
     nodes = menu_renderer.get_nodes(namespace, root_id, breadcrumb=False)
 
-    nodes = [node for node in nodes if not node.attr.get('cms_named_menus_hidden', False) and node.attr.get("is_page", False)]
+    nodes = filter_nodes(nodes)
 
     return nodes, menu_renderer
+

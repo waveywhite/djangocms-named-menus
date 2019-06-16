@@ -15,7 +15,8 @@ class CMSNamedMenu(models.Model):
     slug = AutoSlugField(always_update=False,
                          populate_from='name',
                          unique=True)
-    pages = JSONField(blank=True, null=True,
+    pages = JSONField(blank=True,
+                      null=True,
                       load_kwargs={
                           'object_hook': collections.OrderedDict
                       },

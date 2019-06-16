@@ -51,7 +51,7 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
         extra_context = {
             'menu_pages': menu_pages,
             'available_pages': available_pages,
-            'available_pages_json': json.dumps(available_pages,  cls=LazyEncoder),
+            'available_pages_json': json.dumps(available_pages, cls=LazyEncoder),
             'debug': settings.DEBUG,
         }
         return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
