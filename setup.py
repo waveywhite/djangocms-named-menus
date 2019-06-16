@@ -3,18 +3,19 @@ import codecs
 import os
 from setuptools import setup, find_packages
 
-read = lambda filepath: codecs.open(filepath, 'r', 'utf-8').read()
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
+    README = readme.read()
 
 setup(
     name='djangocms-named-menus',
     version='1.2.0',
     description='Allows you to add and edit custom named menus similar to Wordpress menus',
-    long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
-    author='Ryan Bagwell, Rogerio Carrasqueira, Michael Carder',
-    license='BSD',
+    long_description=README,
+    long_description_content_type='text/markdown',
+    author='Ryan Bagwell, Rogerio Carrasqueira, Michael Carder Ltd',
+    license='MIT',
     url='https://github.com/mcldev/djangocms-named-menus',
     packages=find_packages(),
-    zip_safe=False,
     include_package_data=True,
     install_requires=[
         'Django>=1.11',
@@ -23,6 +24,10 @@ setup(
         'jsonfield>=1.0.0',
         'django-autoslug>=1.7.2',
     ],
+    package_data={
+        'readme': ['README.md'],
+        'license': ['LICENSE']
+    },
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
