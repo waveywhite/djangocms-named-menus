@@ -3,11 +3,19 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.sites.models import Site
 from autoslug.fields import AutoSlugField
 from jsonfield import JSONField
+from django.conf import settings
 import collections
 
 
 def get_current_site():
-    return Site.objects.get_current().id
+    try:
+        current_site = Site.objects.get_current()
+        if current_site:
+            return current_site.id
+    except:
+        return settings.SITE_ID
+    else:
+        return settings.SITE_ID
 
 
 class CMSNamedMenu(models.Model):
