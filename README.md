@@ -33,8 +33,7 @@ Originally forked from:
 
 After installation, place the `{% show_named_menu 'MenuName' %}` template tag where you want your menu to appear.
 
-``` python
-
+``` htmldjango
 {% load named_cms_menu_tags %}
 <ul>
   {% show_named_menu "Main Menu" %}
