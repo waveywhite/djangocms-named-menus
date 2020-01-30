@@ -6,7 +6,7 @@ from menus.menu_pool import menu_pool
 def anonymous_request(f):
     def decorator(request, *args, **kwargs):
         auth_user = None
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             auth_user = request.user
             request.user = AnonymousUser()
         try:

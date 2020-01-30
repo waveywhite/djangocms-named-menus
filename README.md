@@ -1,10 +1,10 @@
-Django CMS Named Menus
-======================
+# Django CMS Named Menus
 
 An extension for Django CMS that allows you to create multiple menus like Wordpress
 
-Replaces Previous Versions
---------------------------
+
+## Replaces Previous Versions
+
 **This replaces the previous versions by Ryan Bagwell and Rogerio Carrasqueira which are no longer actively updated**
 
 Originally forked from:
@@ -12,70 +12,65 @@ Originally forked from:
 - https://github.com/rgcarrasqueira/django-cms-named-menus
 - https://github.com/ryanbagwell/django-cms-named-menus
 
-Installation
-------------
 
-1. Install with pip ``pip install djangocms-named-menus``
+## Installation
 
-2. Add ``cms_named_menus`` to INSTALLED_APPS
+1. Install with pip `pip install djangocms-named-menus`
 
-3. Run migrations ``python manage.py migrate``
+2. Add `cms_named_menus` to INSTALLED_APPS
 
-Upgrading from Previous Version
--------------------------------
+3. Run migrations `python manage.py migrate`
 
-1. Uninstall previous version with pip ``pip uninstall -y django-cms-named-menus``
+
+## Upgrading from Previous Version
+
+1. Uninstall previous version with pip `pip uninstall -y django-cms-named-menus`
 
 2. The migrations and code will pick up previous versions correctly.
 
-Usage
------
 
-After installation, place the ``{% show_named_menu 'MenuName' %}`` template tag where you want your menu to appear.
+## Usage
 
-.. code::
+After installation, place the `{% show_named_menu 'MenuName' %}` template tag where you want your menu to appear.
 
-  {% load named_cms_menu_tags %}
+``` python
 
-  <ul>
-    {% show_named_menu "Main Menu" %}
-  </ul>
+{% load named_cms_menu_tags %}
+<ul>
+  {% show_named_menu "Main Menu" %}
+</ul>
+```
 
 Next, create your menu in the admin area using the drag and drop interface.
-
 Drag items with child menu items:
 
-.. image:: ui.png
+![screenshot](ui.png)
+
 
 Drag items without child menu items:
 
-.. image:: ui2.png
+![screenshot](ui2.png)
 
 
-Settings
---------
+## Settings
+
 The following settings can be changed by adding to your project's settings.py file:
 
-1. Override the default cache duration for Named Menus, default = 3600 seconds
+1. Override the default cache duration for Named Menus, `default = 3600` seconds
 
-.. code::
+``` python
+CMS_NAMED_MENUS_CACHE_DURATION = 3600
+```
 
-  CMS_NAMED_MENUS_CACHE_DURATION = 3600
 
+2. Set the application namespaces that can be used with Named Menus as a list, default is CMS pages only - as the page id will not be unique for other applications e.g. Aldryn NewsBlog etc. `default = ['CMSMenu',]`
 
-2. Set the application namespaces that can be used with Named Menus as a list, default is CMS pages only - as the page id will not be unique for other applications e.g. Aldryn NewsBlog etc. default = ['CMSMenu',]
-
-.. code::
-
-  CMS_NAMED_MENUS_NAMESPACES = ['CMSMenu',]
+``` python
+CMS_NAMED_MENUS_NAMESPACES = ['CMSMenu',]
+```
 
 or to allow all namespaces:
 
-.. code::
-
-  CMS_NAMED_MENUS_NAMESPACES = None
-
-
-
-
-
+``` python
+CMS_NAMED_MENUS_NAMESPACES = None
+```
