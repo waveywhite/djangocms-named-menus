@@ -77,9 +77,9 @@ def convert_menu_to_draft_mode(menu):
     for page in published_pages:
         page_map[page.id] = page.publisher_public_id
 
-    # modify all menu nodes in-situ
+    # modify all menu nodes in-situ > return None id if page deleted
     for node in nodes:
-        node['id'] = page_map[node['id']]
+        node['id'] = page_map.get(node['id'], None)
 
 
 # Build the named menu
@@ -104,7 +104,6 @@ def build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, nam
 
     # Rebuild named menu if not cached and not in draft mode - post-cut/levels/etc happens after
     # --------------------------------
-
     # Get by Slug or from Menu name - backwards compatible
     try:
         named_menu = CMSNamedMenu.objects.get(slug__exact=menu_slug).pages

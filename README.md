@@ -55,21 +55,26 @@ Drag items without child menu items:
 
 The following settings can be changed by adding to your project's settings.py file:
 
-1. Override the default cache duration for Named Menus, `default = 3600` seconds
+1. Override the default cache duration for Named Menus, default = 3600 seconds
 
 ``` python
 CMS_NAMED_MENUS_CACHE_DURATION = 3600
 ```
 
 
-2. Set the application namespaces that can be used with Named Menus as a list, default is CMS pages only - as the page id will not be unique for other applications e.g. Aldryn NewsBlog etc. `default = ['CMSMenu',]`
+2. Set the application namespaces that can be used with Named Menus as a list, default is CMS pages only - as the page id will not be unique for other applications e.g. Aldryn NewsBlog etc. (default = ['CMSMenu',])
 
 ``` python
 CMS_NAMED_MENUS_NAMESPACES = ['CMSMenu',]
 ```
 
-or to allow all namespaces:
+or to allow ALL namespaces:
 
 ``` python
 CMS_NAMED_MENUS_NAMESPACES = None
+```
+
+3. Automatically remove pages that have been unpublished, deleted, or removed from Navigation (default = True)
+```python
+CMS_NAMED_MENUS_REMOVE_UNAVAILABLE_PAGES = True
 ```

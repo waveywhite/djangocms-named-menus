@@ -17,7 +17,8 @@ def flatten_menu(menu):
     for node in menu:
         ret.append(node)
         children = node.get('children', [])
-        ret.extend(flatten_menu(children))
+        if children:
+            ret.extend(flatten_menu(children))
     return ret
 
 

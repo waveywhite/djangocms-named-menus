@@ -20,7 +20,8 @@ def anonymous_request(f):
 
 
 def filter_nodes(nodes):
-    return [node for node in nodes if not node.attr.get('cms_named_menus_hidden', False) and node.attr.get("is_page", False)]
+    return [node for node in nodes if not node.attr.get('cms_named_menus_hidden', False) and
+            node.attr.get("is_page", False)]
 
 
 @anonymous_request
