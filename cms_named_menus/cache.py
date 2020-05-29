@@ -29,27 +29,27 @@ def contains_page(menu, page_id):
             return True
 
 
-def _key(menu_slug):
-    return 'cms_named_menu_{slug}'.format(slug=menu_slug)
+def _key(menu_slug, language=""):
+    return 'cms_named_menu_{slug}_{lang}'.format(lang=language, slug=menu_slug)
 
 
-def get(menu_slug):
-    key = _key(menu_slug)
+def get(menu_slug, language=""):
+    key = _key(menu_slug, language)
     return cache.get(key, None)
 
 
-def set(menu_slug, nodes):  # @ReservedAssignment
-    key = _key(menu_slug)
+def set(menu_slug, nodes, language=""):  # @ReservedAssignment
+    key = _key(menu_slug, language)
     cache.set(key, nodes, CACHE_DURATION)
 
 
-def delete(menu_slug):
-    delete_many([menu_slug])
+def delete(menu_slug, language=""):
+    delete_many([menu_slug], language)
 
 
-def delete_many(menu_slugs):
+def delete_many(menu_slugs, language=""):
     for menu_slug in menu_slugs:
-        key = _key(menu_slug)
+        key = _key(menu_slug, language)
         cache.delete(key)
 
 

@@ -83,7 +83,7 @@ def convert_menu_to_draft_mode(menu):
 
 
 # Build the named menu
-def build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, namespace=None):
+def build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, language, namespace=None):
 
     # Return if no nodes!
     if not page_nodes:
@@ -98,7 +98,7 @@ def build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, nam
     # --------------------------------
     named_menu = None
     if not draft_mode_active:
-        named_menu = cache.get(menu_slug)
+        named_menu = cache.get(menu_slug, language)
         if named_menu:
             return named_menu
 
@@ -130,7 +130,7 @@ def build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, nam
 
         # Cache named menu to avoid repeated queries
         if not draft_mode_active:
-            cache.set(menu_slug, named_menu_nodes)
+            cache.set(menu_slug, named_menu_nodes, language)
 
         return named_menu_nodes
 
@@ -181,8 +181,11 @@ class ShowNamedMenu(ShowMenu):
             # Get if in Draft or Published mode
             draft_mode_active = use_draft(request)
 
+            # Get Language to ensure separate cache of page nodes
+            language = getattr(request, 'LANGUAGE_CODE', "")
+
             # Build or get from cache - Named menu nodes
-            nodes = build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, namespace=namespace)
+            nodes = build_named_menu_nodes(menu_name_or_slug, page_nodes, draft_mode_active, language, namespace=namespace)
 
             # If nodes returned, then cut levels and apply modifiers
             if nodes:
