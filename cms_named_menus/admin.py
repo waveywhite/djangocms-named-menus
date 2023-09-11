@@ -63,24 +63,27 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
     change_form_template = 'cms_named_menus/change_form.html'
     readonly_fields = ('site',)
     list_display = ('name', 'slug', 'site')
+    save_on_top = True
 
     def get_queryset(self, request):
         qs = super(CMSNamedMenuAdmin, self).get_queryset(request)
         current_site = get_current_site(request)
         return qs.filter(site=current_site)
 
-    def change_view(self, request, object_id, form_url='', extra_context={}):
+    def changeform_view(self, request, object_id = None, form_url = '', extra_context = None):
         nodes, menu_renderer = get_nodes(request)
         available_pages = self.serialize_navigation(nodes)
-        menu_pages = CMSNamedMenu.objects.get(id=object_id).pages
-
-        # Need to take all menu_pages and map to available pages, or REMOVE them!
-        # then, on save the menu is updated without removed pages...
-        if REMOVE_UNAVAILABLE_PAGES:
-            available_ids = get_all_available_ids(available_pages)
-            removed_nodes = clean_menu(menu_pages, available_ids)
-        else:
-            removed_nodes = []
+        # Get defaults - i.e. for a new menu
+        removed_nodes = []
+        menu_pages = CMSNamedMenu.objects.none()
+        # If change form, get the menu pages and remove unavailable pages
+        if object_id:
+            menu_pages = CMSNamedMenu.objects.get(id=object_id).pages
+            # Need to take all menu_pages and map to available pages, or REMOVE them!
+            # then, on save the menu is updated without removed pages...
+            if REMOVE_UNAVAILABLE_PAGES:
+                available_ids = get_all_available_ids(available_pages)
+                removed_nodes = clean_menu(menu_pages, available_ids)
 
         extra_context = {
             'menu_pages': menu_pages,
@@ -89,7 +92,7 @@ class CMSNamedMenuAdmin(admin.ModelAdmin):
             'available_pages_json': json.dumps(available_pages, cls=LazyEncoder),
             'debug': settings.DEBUG,
         }
-        return super(CMSNamedMenuAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(CMSNamedMenuAdmin, self).changeform_view(request, object_id, form_url, extra_context)
 
     def serialize_navigation(self, all_nodes):
         # Recursively convert nodes to simple nodes

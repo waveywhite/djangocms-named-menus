@@ -8,7 +8,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 
 setup(
     name='djangocms-named-menus',
-    version='2.0.1',
+    version='2.0.2',
     description='Allows you to add and edit custom named menus similar to Wordpress menus',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'Django>=1.11',
+        'Django>=2.2',
         'django-classy-tags',
         'django-cms>=3.3',
         'jsonfield>=1.0.0',
